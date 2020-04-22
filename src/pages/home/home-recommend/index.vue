@@ -1,5 +1,6 @@
 <template>
-  <view>
+  <!-- 初次进页面，需要请求数据，页面存在刷新卡顿数据一时半会请求不回来，因此要加v-if="recommends.length>0" -->
+  <view v-if="recommends.length>0">
     <!-- 推荐开始 -->
     <view class="recommend_wrap">
       <view class="recommend_item" v-for="item in recommends" :key="item.id">
@@ -22,11 +23,23 @@
       </view>
       <view class="month_content">
         <view class="month_item" v-for="item in months.items" :key="item.id">
-          <image :src="item.thumb" />
+          <image mode="aspectFill" :src="item.thumb+item.rule.replace('$<Height>',360)" />
         </view>
       </view>
     </view>
     <!-- 月份结束 -->
+    <!-- 热门开始 -->
+    <view class="host_wrap">
+      <view class="host_title">
+        <text>热门</text>
+      </view>
+      <view class="host_content">
+        <view class="host_item" v-for="item in host" :key="item.id">
+          <image mode="widthFix" :src="item.thumb" />
+        </view>
+      </view>
+    </view>
+    <!-- 热门结束 -->
   </view>
 </template>
 <script>
@@ -36,7 +49,8 @@ export default {
     return {
       //
       recommends: [],
-      months: []
+      months: [],
+      host: []
     };
   },
   mounted() {
@@ -59,7 +73,9 @@ export default {
       //将时间戳改为18号/月  moment.js
       this.months.MM = moment(this.months.stime).format("MM");
       this.months.DD = moment(this.months.stime).format("DD");
-      console.log(this.months);
+
+      //获取热门
+      this.host = result.res.vertical;
     });
   }
 };
@@ -95,6 +111,35 @@ export default {
         color: #666;
         margin-left: 15rpx;
       }
+    }
+  }
+  .month_content {
+    display: flex;
+    flex-wrap: wrap;
+    .month_item {
+      width: 33.33%;
+      border: 5rpx solid #fff;
+    }
+  }
+}
+
+.host_wrap {
+  .host_title {
+    padding: 20rpx;
+    text {
+      border-left: 20rpx solid #f0f;
+      padding-left: 20rpx;
+      font-size: 34rpx;
+      font-weight: 600;
+    }
+  }
+
+  .host_content {
+    display: flex;
+    flex-wrap: wrap;
+    .host_item {
+      width: 33.33%;
+      border: 5rpx solid #fff;
     }
   }
 }
