@@ -1,6 +1,11 @@
 <template>
   <!-- 初次进页面，需要请求数据，页面存在刷新卡顿数据一时半会请求不回来，因此要加v-if="recommends.length>0" -->
-  <view v-if="recommends.length>0">
+  <scroll-view
+    class="recommends_view"
+    scroll-y
+    @scrolltolower="scrollTolower"
+    v-if="recommends.length>0"
+  >
     <!-- 推荐开始 -->
     <view class="recommend_wrap">
       <view class="recommend_item" v-for="item in recommends" :key="item.id">
@@ -40,7 +45,7 @@
       </view>
     </view>
     <!-- 热门结束 -->
-  </view>
+  </scroll-view>
 </template>
 <script>
 import moment from "moment";
@@ -50,38 +55,71 @@ export default {
       //
       recommends: [],
       months: [],
-      host: []
-    };
-  },
-  mounted() {
-    this.request({
-      url: "http://157.122.54.189:9088/image/v3/homepage/vertical",
-      data: {
+      host: [],
+      params: {
         //要获取几条
         limit: 30,
         //关键字
         order: "hot",
         //哟跳过几条
         skip: 0
-      }
-    }).then(result => {
-      console.log(result);
-      //推荐模块
-      this.recommends = result.res.homepage[1].items;
-      //月份模块
-      this.months = result.res.homepage[2];
-      //将时间戳改为18号/月  moment.js
-      this.months.MM = moment(this.months.stime).format("MM");
-      this.months.DD = moment(this.months.stime).format("DD");
+      },
+      hasMore: true
+    };
+  },
+  mounted() {
+    this.getList();
+  },
+  methods: {
+    getList() {
+      this.request({
+        url: "http://157.122.54.189:9088/image/v3/homepage/vertical",
+        data: this.params
+      }).then(result => {
+        if (result.res.vertical === 0) {
+          this.hasMore = false;
+          return;
+        }
+        if (this.recommends.length === 0) {
+          //第一次发请求获取页面固定资源，只多次请求分页
+          //推荐模块
+          this.recommends = result.res.homepage[1].items;
+          //月份模块
+          this.months = result.res.homepage[2];
+          //将时间戳改为18号/月  moment.js
+          this.months.MM = moment(this.months.stime).format("MM");
+          this.months.DD = moment(this.months.stime).format("DD");
+        }
 
-      //获取热门
-      this.host = result.res.vertical;
-    });
+        //获取热门   分页数据叠加
+        this.host = [...this.host, ...result.res.vertical];
+      });
+    },
+    //分页处理函数
+    scrollTolower() {
+      //改变请求数据的参数skip
+      //请求数据
+      //叠加数据。把之前请求的数据也算在里面
+      if (this.hasMore) {
+        this.params.skip += this.params.limit;
+        this.getList();
+      } else {
+        //弹窗提示用户没有数据了
+        uni.showToast({
+          title: "没有数据了",
+          icon: "none"
+        });
+      }
+    }
   }
 };
 </script>
 
 <style lang='scss'>
+.recommends_view {
+  // height=屏幕高度-头部标题高度
+  height: calc(100vh - 36px);
+}
 .recommend_wrap {
   display: flex;
   flex-wrap: wrap;
