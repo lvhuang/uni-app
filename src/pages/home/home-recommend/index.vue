@@ -76,7 +76,7 @@ export default {
         url: "http://157.122.54.189:9088/image/v3/homepage/vertical",
         data: this.params
       }).then(result => {
-        if (result.res.vertical === 0) {
+        if (result.res.vertical.length === 0) {
           this.hasMore = false;
           return;
         }
